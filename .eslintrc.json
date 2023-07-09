@@ -23,5 +23,6 @@
     "browser": true,
     "es2021": true,
     "node": true
-  }
+  },
+  "plugins": ["tailwindcss"]
 }

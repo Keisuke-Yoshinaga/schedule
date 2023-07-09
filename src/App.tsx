@@ -1,32 +1,84 @@
+import { DndProvider } from 'react-dnd';
+import AppBar from './components/AppBar';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { Column } from './components/Column';
+import { NewColumnButton } from './components/NewColumnButton';
 import { useState } from 'react';
-import reactLogo from './assets/react.svg';
+import { AddColumnModal } from './components/AddColumnModal';
+import { Draggable } from './components/Draggable';
+import { useTaskGroups } from './hooks/useTaskGroups';
 
-function App() {
-  const [count, setCount] = useState(0);
+export const useShowModal = (): [boolean, (showModal: boolean) => void] => {
+  const [showModal, setShowModal] = useState(false);
+
+  const updateShowModal = (showModal: boolean) => {
+    setShowModal(showModal);
+  };
+
+  return [showModal, updateShowModal];
+};
+
+const App = () => {
+  const [
+    taskGroups,
+    updateTaskGroups,
+    swapTaskGroups,
+    tasks,
+    updateTasks,
+    swapTasks,
+    deleteTasks,
+  ] = useTaskGroups();
+
+  const [showModal, updateShowModal] = useShowModal();
+
+  let index = 0;
 
   return (
-    <div id="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src="/vite.svg" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank" rel="noreferrer">
-          <img src={reactLogo} alt="React logo" />
-        </a>
+    <DndProvider backend={HTML5Backend}>
+      <div className="h-screen">
+        <AppBar />
+        <div className="mt-8 h-full">
+          <div className="m-4 h-full">
+            <div className="flex h-full gap-4">
+              {taskGroups.map((taskGroup, columnIndex) => {
+                const groupedTasks = tasks.filter((task) => {
+                  return task.groupName === taskGroup.groupName;
+                });
+                const firstIndex = index;
+                index = index + groupedTasks.length;
+                return (
+                  <li key={taskGroup.key} className="list-none">
+                    <Draggable
+                      item={taskGroup}
+                      index={columnIndex}
+                      swapItems={swapTaskGroups}
+                    >
+                      <Column
+                        columnName={taskGroup.groupName}
+                        firstIndex={firstIndex}
+                        tasks={groupedTasks}
+                        updateTasks={updateTasks}
+                        deleteTasks={deleteTasks}
+                        swapTasks={swapTasks}
+                      ></Column>
+                    </Draggable>
+                  </li>
+                );
+              })}
+              <NewColumnButton
+                updateShowModal={updateShowModal}
+              ></NewColumnButton>
+              <AddColumnModal
+                showModal={showModal}
+                updateShowModal={updateShowModal}
+                updateNewColumnName={updateTaskGroups}
+              ></AddColumnModal>
+            </div>
+          </div>
+        </div>
       </div>
-      <h1>Vite + React + Docker</h1>
-      <div id="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p id="read-the-docs">Click on the Vite and React logos to learn more</p>
-      <h1 className="text-9xl font-bold underline">Hello world!</h1>
-    </div>
+    </DndProvider>
   );
-}
+};
 
 export default App;
